@@ -127,11 +127,6 @@ public class VariableEncodingText {
             
             System.arraycopy(encodedBytes, 0, result, 0, i);
 
-            // Imprime result como hex
-            for (int j = 0; j < result.length; j++) {
-                System.out.printf("%02X ", result[j]);
-            }
-
             bytes.set(result, 0, result.length);
 
             return bytes;
