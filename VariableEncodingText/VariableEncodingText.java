@@ -18,40 +18,42 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
+import java.util.HashMap;
 
-import javax.naming.Context;
-
+// Class to encode a text file using a dictionary and VByte encoding
 public class VariableEncodingText {
 
+    // Mapper class
     public static class VariableEncodingTextMapper extends Mapper<LongWritable, Text, LongWritable, IntWritable> {
 
         private LongWritable outputKey = new LongWritable();
         private IntWritable outputValue = new IntWritable();
     
-        // HashMap para almacenar el diccionario antes de procesar las palabras
-        private java.util.Map<String, Integer> dictionary = new java.util.HashMap<>();
+        // HashMap to store the dictionary
+        private HashMap<String, Integer> dictionary = new HashMap<String, Integer>();
     
         @Override
         public void setup(Context context) throws IOException, InterruptedException {
-            // Obtener la ruta del diccionario desde el sistema de archivos distribuido
+
+            // Get the dictionary file path
             Configuration conf = context.getConfiguration();
             FileSystem fs = FileSystem.get(conf);
             Path dictionaryFilePath = new Path(conf.get("dictionary_path"));
 
-            // Contador para asignar el código numérico a cada palabra	
+            // Counter to store the code of each word
             Integer counter = 0;
             
-            // Abrir el diccionario y leerlo línea por línea
+            // Open the dictionary file and read it line by line
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(dictionaryFilePath)))) {
                 String line;
                 
                 while ((line = reader.readLine()) != null) {
                     
-                    // Obtener la plabra
+                    // Get the word
                     String[] tokens = line.split("\\s+");
                     String word = tokens[0];
                     
-                    // Agregar la palabra y el código al map
+                    // Add the word and its code to the dictionary
                     dictionary.put(word, counter++);
                 }
             }
@@ -60,29 +62,28 @@ public class VariableEncodingText {
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 
+            // Position of the word in the line
             long counter = 0;
             
-            // Obtiene el split actual de la tarea de map
+            // Get the start position of the input split
             FileSplit fileSplit = (FileSplit) context.getInputSplit();
-            // Obtiene el inicio del split actual
             long start = fileSplit.getStart();
             
-            // Separar la línea de texto en palabras
+            // Tokenize the input line
             StringTokenizer itr = new StringTokenizer(value.toString());
 
             while (itr.hasMoreTokens()) {
                 
-                // Obtener la palabra
+                // Get the code of the word
                 String word = new String(itr.nextToken());
-
-                // Obtener el código asociado a la palabra
                 Integer number = Integer.valueOf(dictionary.get(word));
 
                 if (number != null) {
-                    // La clave de salida es la posición de la palabra en el archivo
+                    
+                    // Set the unique output key
                     outputKey.set(start + key.get() + counter);
 
-                    // El valor de salida es el código asociado a la palabra
+                    // Set the output value
                     outputValue.set(number);
                     context.write(outputKey, outputValue);
 
@@ -92,41 +93,44 @@ public class VariableEncodingText {
         }
     }
 
+    // Reducer class
     public static class VariableEncodingTextReducer extends Reducer<LongWritable, IntWritable, NullWritable, BytesWritable> {
 
         @Override
         public void reduce(LongWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
            
+            // There is just one value
             for (IntWritable val : values) {
 
+                // Encode the value using VByte encoding
                 BytesWritable bytesValue = getVByteEncode(val.get());
-
+                
+                // Write the encoded value to the context. No key is needed
                 context.write(NullWritable.get(), bytesValue);
             }
         }
 
-        // Método para convertir un número del tipo int a un arreglo de bytes
+        // Function to encode an integer using VByte
         public BytesWritable getVByteEncode(int value){
             
             BytesWritable bytes = new BytesWritable();
 
-            // Tamaño máximo necesario para codificar 4 bytes
+            // Array to store the encoded bytes
             byte[] encodedBytes = new byte[5];
 
             int i = 0;
             
-            // Codifica el int usando VByte
+            // Encode the integer using VByte encoding
             while(value > 127) {
 
                 encodedBytes[i++] = (byte)(value & 127);
-                value>>>=7;
+                value>>>= 7;
             }
 
-            encodedBytes[i++] = (byte)(value|0x80);
+            encodedBytes[i++] = (byte)(value | 0x80);
             byte[] result = new byte[i];
             
             System.arraycopy(encodedBytes, 0, result, 0, i);
-
             bytes.set(result, 0, result.length);
 
             return bytes;
@@ -135,13 +139,14 @@ public class VariableEncodingText {
 
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
-            System.err.println("Uso: VariableEncodingText.jar <ruta_archivo_texto> <ruta_archivo_diccionario> <ruta_salida>");
+            System.err.println("Use: VariableEncodingText.jar <input_directory_path> <input_dictionary_file_path> <output_directory>");
             System.exit(-1);
         }
 
-        // Configuración del trabajo MapReduce
+        // MapReduce job configuration
         Configuration conf = new Configuration();
-        conf.set("dictionary_path", args[1]);  // Configurar la ruta del archivo del diccionario
+        // Set the dictionary file path
+        conf.set("dictionary_path", args[1]);
 
         Job job = Job.getInstance(conf, "Variable Encoding Text Job");
         
@@ -156,9 +161,8 @@ public class VariableEncodingText {
 
         job.setOutputFormatClass(VariableBinaryOutputFormat.class);
 
-        // Configuración de las entradas y salida
-        FileInputFormat.addInputPath(job, new Path(args[0]));  // Archivo de palabras
-        FileOutputFormat.setOutputPath(job, new Path(args[2])); // Directorio de salida
+        FileInputFormat.addInputPath(job, new Path(args[0]));  
+        FileOutputFormat.setOutputPath(job, new Path(args[2])); 
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }

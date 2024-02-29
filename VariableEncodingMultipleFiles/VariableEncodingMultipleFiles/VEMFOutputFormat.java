@@ -1,4 +1,4 @@
-package TMP;
+package VariableEncodingMultipleFiles;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -13,30 +13,33 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 import java.io.DataOutputStream;
 
-public class CustomOutputFormat extends FileOutputFormat<NullWritable, BytesWritable> {
+// Custom OutputFormat
+public class VEMFOutputFormat extends FileOutputFormat<NullWritable, BytesWritable> {
 
     @Override
     public RecordWriter<NullWritable, BytesWritable> getRecordWriter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
 
+        // Each map generates an output file
         Path outputDir = FileOutputFormat.getOutputPath(taskAttemptContext);
         Path outputFile = new Path(outputDir, "output_" + taskAttemptContext.getTaskAttemptID().getTaskID().getId());
-
         FileSystem fs = outputDir.getFileSystem(taskAttemptContext.getConfiguration());
         FSDataOutputStream fsOutput = fs.create(outputFile, true);
 
-        return new CustomRecordWriter(fsOutput);
+        return new VEMFRecordWriter(fsOutput);
     }
 
-    private static class CustomRecordWriter extends RecordWriter<NullWritable, BytesWritable> {
+    // Custom RecordWriter
+    private static class VEMFRecordWriter extends RecordWriter<NullWritable, BytesWritable> {
 
         private final FSDataOutputStream fsOutput;
         private DataOutputStream outputStream;
 
-        public CustomRecordWriter(FSDataOutputStream fsOutput) {
+        public VEMFRecordWriter(FSDataOutputStream fsOutput) {
             this.fsOutput = fsOutput;
             outputStream = new DataOutputStream(fsOutput);
         }
 
+        // Write the value as byte array to the output file
         @Override
         public void write(NullWritable key, BytesWritable value) throws IOException, InterruptedException {
 
@@ -44,6 +47,7 @@ public class CustomOutputFormat extends FileOutputFormat<NullWritable, BytesWrit
             outputStream.write(bytes);
         }
 
+        // Close the output file
         @Override
         public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
 

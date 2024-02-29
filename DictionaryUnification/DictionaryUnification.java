@@ -1,5 +1,3 @@
-// Purpose: To unify n dictionaries into one dictionary.
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,10 +7,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+// This program reads a folder of files, each containing a dictionary of words and their frequency, and unifies them into a single dictionary.
 public class DictionaryUnification {
     
     public static void main(String[] args) throws IOException {
         
+        // Check if the number of arguments is correct
+        if (args.length != 2) {
+            System.out.println("Usage: java DictionaryUnification <folderPath> <unifiedDictionaryFile>");
+            System.exit(1);
+        }
+
         String folderPath = args[0];
         String unifiedDictionaryFile = args[1];
 
@@ -21,10 +26,9 @@ public class DictionaryUnification {
         File[] listOfFiles = folder.listFiles();
 
         // Create the unified dictionary
-        Map<String, Integer> unifiedDictionary = new HashMap<String, Integer>();
+        HashMap<String, Integer> unifiedDictionary = new HashMap<String, Integer>();
 
         // Read each file in the folder
-
         for (File file : listOfFiles) {
             if (file.isFile()) {
                 // Read the file
