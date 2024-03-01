@@ -20,7 +20,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import VariableEncodingMultipleFiles.VEMFRecordReader;
+import VariableEncodingMultipleFiles.VEMFInputFormat.VEMFRecordReader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,9 +44,9 @@ public class VariableEncodingMultipleFiles {
 
                 // Get the local dictionary from the RecordReader
                 InputSplit inputSplit = context.getInputSplit();
-                RecordReader<LongWritable, BytesWritable> reader = new CustomRecordReader();
+                RecordReader<LongWritable, BytesWritable> reader = new VEMFRecordReader();
                 reader.initialize(inputSplit, context);
-                localDictionary = ((CustomRecordReader) reader).getDictionary();
+                localDictionary = ((VEMFRecordReader) reader).getDictionary();
 
                 // Get the global dictionary
                 Configuration conf = context.getConfiguration();

@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.io.DataOutputStream;
 
 // Save the location in bytes of the encoded file, after the dictionary
-public class EncodedFileDirection {
+public class EncodeFileDirection {
 
     public static void main(String[] args) throws IOException {
 
         if (args.length != 2) {
-            System.err.println("Use: java EncodedFileDirection <InputDictionary> <OutputFile>");
+            System.err.println("Use: java EncodeFileDirection <InputDictionary> <OutputFile>");
             System.exit(1);
         }
 
