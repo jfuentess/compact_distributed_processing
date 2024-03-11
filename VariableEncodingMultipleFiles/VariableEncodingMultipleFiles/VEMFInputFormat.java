@@ -15,6 +15,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.BufferedReader;
 import java.nio.ByteBuffer;
 
@@ -78,22 +79,34 @@ public class VEMFInputFormat extends FileInputFormat<LongWritable, BytesWritable
 
             // Read the dictionary from the file
             byte[] bytesDictionary = new byte[encodedFileDirection - 4];
-            in.read(bytesDictionary);
+            in.read(4, bytesDictionary, 0, encodedFileDirection - 4);
             String dictionaryString = new String(bytesDictionary);
 
             // Load the dictionary into a HashMap
             dictionary = loadDictionary(dictionaryString);
+
+            in.seek(encodedFileDirection);
         }
 
         // Load the dictionary into a HashMap
         private HashMap<Integer, String> loadDictionary(String dictionaryString) {
             
-            // The key is the position of the word in the dictionary
-            String[] lines = dictionaryString.split("\n");
-            for (int i = 0; i < lines.length; i++) {
-                String[] tokens = lines[i].split("\\s+");
-                dictionary.put(i, tokens[0]);
+            // Read the string line by line
+            BufferedReader bf = new BufferedReader(new StringReader(dictionaryString));
+
+            String line;
+            int counter = 0;
+
+            try {
+                while ((line = bf.readLine()) != null) {
+                    
+                    String[] tokens = line.split("\\s+");
+                    dictionary.put(counter++, tokens[0]);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+
             return dictionary;
         }
 
