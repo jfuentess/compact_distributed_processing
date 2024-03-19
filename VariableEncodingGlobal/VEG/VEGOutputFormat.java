@@ -1,29 +1,29 @@
-package VariableEncodingGlobal;
+package VEG;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-
 import java.io.IOException;
 import java.io.DataOutputStream;
 
 // Custom OutputFormat
-public class VEGOutputFormat extends FileOutputFormat<NullWritable, BytesWritable> {
+public class VEGOutputFormat extends FileOutputFormat<LongWritable, BytesWritable> {
 
     @Override
-    public RecordWriter<NullWritable, BytesWritable> getRecordWriter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
+    public RecordWriter<LongWritable, BytesWritable> getRecordWriter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
 
         return new VEGRecordWriter(taskAttemptContext);
     }
 
     // Custom RecordWriter
-    private static class VEGRecordWriter extends RecordWriter<NullWritable, BytesWritable> {
+    private static class VEGRecordWriter extends RecordWriter<LongWritable, BytesWritable> {
 
         private DataOutputStream outputStream;
 
@@ -38,7 +38,7 @@ public class VEGOutputFormat extends FileOutputFormat<NullWritable, BytesWritabl
 
         // Write the value as byte array to the output file
         @Override
-        public void write(NullWritable key, BytesWritable value) throws IOException, InterruptedException {
+        public void write(LongWritable key, BytesWritable value) throws IOException, InterruptedException {
 
             byte[] bytes = value.copyBytes();
             outputStream.write(bytes);

@@ -1,4 +1,4 @@
-package TMP;
+package VEMF;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -15,34 +15,43 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.BufferedReader;
 import java.nio.ByteBuffer;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CustomInputFormat extends FileInputFormat<LongWritable, BytesWritable> {
+public class VEMFInputFormat extends FileInputFormat<LongWritable, BytesWritable> {
 
     @Override
     public RecordReader<LongWritable, BytesWritable> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
 
-        return new CustomRecordReader();
+        return new VEMFRecordReader();
     }
 
+    // Each file is a split
     @Override
     protected boolean isSplitable(JobContext context, Path filename) {
         
         return false;
     }
 
-    public static class CustomRecordReader extends RecordReader<LongWritable, BytesWritable> {
+    // Custom RecordReader
+    public static class VEMFRecordReader extends RecordReader<LongWritable, BytesWritable> {
 
+        // InputSplit
         private FSDataInputStream in;
+        // Start position of the split
         private long start;
+        // End position of the split
         private long end;
+        // Current position of the split
         private long pos;
+        // Local dictionary of each file
         private HashMap<Integer, String> dictionary = new HashMap<Integer, String>();
+
+        // Key-value pair
         private LongWritable key = new LongWritable();
         private BytesWritable value = new BytesWritable();
 
@@ -54,40 +63,64 @@ public class CustomInputFormat extends FileInputFormat<LongWritable, BytesWritab
             Path path = fileSplit.getPath();
             FileSystem fs = path.getFileSystem(conf);
 
+            // Open the file
             in = fs.open(path);
             start = fileSplit.getStart();
             end = start + fileSplit.getLength();
             pos = start;
+            // Move the pointer to the start position
             in.seek(start);
 
+            // Read the first 4 bytes to get the location of the encoded file
             byte[] encodedFileDirectionBytes = new byte[4];
             in.read(encodedFileDirectionBytes);
             int encodedFileDirection = ByteBuffer.wrap(encodedFileDirectionBytes).getInt();
 
+            // Read the dictionary from the file
             byte[] bytesDictionary = new byte[encodedFileDirection - 4];
-            in.read(bytesDictionary);
+            in.read(4, bytesDictionary, 0, encodedFileDirection - 4);
             String dictionaryString = new String(bytesDictionary);
 
+            // Load the dictionary into a HashMap
             dictionary = loadDictionary(dictionaryString);
+
+            // Move the pointer to the start of the encoded file
+            in.seek(encodedFileDirection);
         }
 
+        // Load the dictionary into a HashMap
         private HashMap<Integer, String> loadDictionary(String dictionaryString) {
             
-            String[] lines = dictionaryString.split("\n");
-            for (int i = 0; i < lines.length; i++) {
-                String[] tokens = lines[i].split("\\s+");
-                dictionary.put(i, tokens[0]);
+            // Read the string line by line
+            BufferedReader bf = new BufferedReader(new StringReader(dictionaryString));
+
+            String line;
+            int counter = 0;
+
+            try {
+                while ((line = bf.readLine()) != null) {
+                    
+                    String[] tokens = line.split("\\s+");
+                    dictionary.put(counter++, tokens[0]);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+
             return dictionary;
         }
 
+        // Return the dictionary
         public HashMap<Integer, String> getDictionary() {
             return dictionary;
         }
 
+        // Get the next key-value pair
         @Override
         public boolean nextKeyValue() throws IOException, InterruptedException {
-                
+            
+            // Read the value from the binary file
+            // Each value ends with a byte with the the leftmost bit set to 1
             if (pos < end) {
                 int length = 0;
                 byte[] bytes = new byte[5];
@@ -115,12 +148,14 @@ public class CustomInputFormat extends FileInputFormat<LongWritable, BytesWritab
             return false;
         }
 
+        // The key is the position of the encoded word in the file
         @Override
         public LongWritable getCurrentKey() throws IOException, InterruptedException {
 
             return key;
         }
 
+        // The value is the VByte encoded word
         @Override
         public BytesWritable getCurrentValue() throws IOException, InterruptedException {
             

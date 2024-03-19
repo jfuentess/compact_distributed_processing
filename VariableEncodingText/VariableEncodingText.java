@@ -13,7 +13,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -139,7 +138,7 @@ public class VariableEncodingText {
 
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
-            System.err.println("Use: VariableEncodingText.jar <input_directory_path> <input_dictionary_file_path> <output_directory>");
+            System.err.println("Use: VariableEncodingText.jar VariableEncodingText <input_directory_path> <input_dictionary_file_path> <output_directory>");
             System.exit(-1);
         }
 

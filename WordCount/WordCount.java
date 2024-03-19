@@ -10,7 +10,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-// Aplicación para contar palabras usando Hadoop
+// Aplication to count the number of occurrences of each word in a text file
 public class WordCount {
 
   // Clase Mapper<Input Key, Input Value, Output Key, Output Value>
@@ -56,7 +56,7 @@ public class WordCount {
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     
-    Job job = Job.getInstance(conf, "WordCount");
+    Job job = Job.getInstance(conf, "WordCount Job");
     
     job.setJarByClass(WordCount.class);
     

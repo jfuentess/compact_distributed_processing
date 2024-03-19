@@ -8,9 +8,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+// Program to decode a VByte encoded file using a dictionary
 public class DecodeVariableText{
 
     public static void main(String[] args) throws Exception{
+
+        // Check if the number of arguments is correct
+        if (args.length != 2) {
+            System.out.println("Usage: java DecodeVariableText <encodedText> <dictionary>");
+            System.exit(1);
+        }
 
         String encodedText = args[0];
 
@@ -20,7 +27,7 @@ public class DecodeVariableText{
     
         try{
             
-            // Lee el diccionario y lo almacena en un HashMap
+            // Read the dictionary file and store it in a map
             Integer counter = 0;
 
             FileInputStream fstream = new FileInputStream(dictionaryArg);
@@ -36,19 +43,19 @@ public class DecodeVariableText{
 
             br.close();
 
-            // Lee el archivo binario y lo decodifica como número entero
+            // Read the encoded file
             FileInputStream fstreamBinary = new FileInputStream(encodedText);
 
             DataInputStream disBytes = new DataInputStream(fstreamBinary);
 
-            // Arreglo para guardar los bytes decodificados leídos del archivo binario
+            // ArrayList to store the decoded integers
             ArrayList<Integer> dataVBytes = new ArrayList<Integer>();
 
-            // Lee los bytes del archivo binario
+            // Read the file byte by byte
             while(disBytes.available() > 0){
 
                 int j = 0;
-                // Lee bytes hasta encontrar un byte con el bit más significativo en 1
+                // Read the byte until the more significant bit is 1
                 byte[] bytes = new byte[5];
                 
                 byte b = disBytes.readByte();
@@ -61,7 +68,7 @@ public class DecodeVariableText{
 
                 bytes[j] = b;
 
-                // Decodifica el byte y lo guarda en el arreglo
+                // Decode the bytes and store the integer in the ArrayList
                 dataVBytes.add(decode(bytes));   
             }
 
@@ -69,11 +76,12 @@ public class DecodeVariableText{
             disBytes.close(); 
             
             int c = 1;
-            // Decodifica los números enteros usando el diccionario
-            BufferedWriter bw = new BufferedWriter(new FileWriter(encodedText + "_decoded.txt"));
+            // Decode the integers and write the decoded text to a file
+            BufferedWriter bw = new BufferedWriter(new FileWriter(encodedText + "_decoded"));
 
             for(Integer i : dataVBytes){
 
+                // Add a new line every 10 words
                 if(c % 10 == 0)
                     bw.write(dictionary.get(i) + "\n");
                 else
@@ -89,7 +97,7 @@ public class DecodeVariableText{
             System.out.println("Error: " + e.getMessage());
         }
     }
-    // Decodifica un arreglo de bytes usando VByte
+    // Decode an array of bytes into an integer using VByte encoding
     public static int decode(byte[] bytes) {
         int value = 0;
         for (int i = 0; i < bytes.length; i++) {

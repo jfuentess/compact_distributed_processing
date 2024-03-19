@@ -14,7 +14,7 @@ public class DictionaryUnification {
         
         // Check if the number of arguments is correct
         if (args.length != 2) {
-            System.out.println("Usage: java DictionaryUnification <folderPath> <unifiedDictionaryFile>");
+            System.out.println("Usage: java DictionaryUnification <folderPath> <output_DictionaryFile>");
             System.exit(1);
         }
 

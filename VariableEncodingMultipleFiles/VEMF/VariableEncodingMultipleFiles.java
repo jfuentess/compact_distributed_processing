@@ -1,4 +1,4 @@
-package VariableEncodingMultipleFiles;
+package VEMF;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -19,15 +19,13 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
-import VariableEncodingMultipleFiles.VEMFInputFormat.VEMFRecordReader;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 import java.util.Map;
+import VEMF.VEMFInputFormat.VEMFRecordReader;
 
 // Read multiple encoded files and reencode the words using a global dictionary
 public class VariableEncodingMultipleFiles {
@@ -159,7 +157,7 @@ public class VariableEncodingMultipleFiles {
     public static void main(String[] args) throws Exception {
         
         if (args.length != 3) {
-            System.err.println("Usage: yarn jar VariableEncodingMultipleFiles.jar VariableEncodingMultipleFiles <input_path> <global_dictionary> <output_path>");
+            System.err.println("Usage: yarn jar VariableEncodingMultipleFiles.jar VEMF.VariableEncodingMultipleFiles <input_path> <global_dictionary> <output_path>");
             System.exit(-1);
         }
 
@@ -170,7 +168,7 @@ public class VariableEncodingMultipleFiles {
         
         job.setJarByClass(VariableEncodingMultipleFiles.class);
         job.setMapperClass(VEMFMapper.class);
-        // No need for a reducer
+        // There is no reducer
         job.setNumReduceTasks(0);
 
         job.setInputFormatClass(VEMFInputFormat.class);

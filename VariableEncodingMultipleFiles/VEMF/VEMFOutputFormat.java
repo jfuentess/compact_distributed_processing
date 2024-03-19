@@ -1,4 +1,4 @@
-package VariableEncodingMultipleFiles;
+package VEMF;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -9,7 +9,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-
 import java.io.IOException;
 import java.io.DataOutputStream;
 

@@ -2,7 +2,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.DataOutputStream;
-
 // Save the location in bytes of the encoded file, after the dictionary
 public class EncodeFileDirection {
 

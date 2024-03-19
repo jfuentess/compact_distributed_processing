@@ -1,4 +1,4 @@
-package VariableEncodingGlobal;
+package VEG;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -54,7 +54,7 @@ public class VEGInputFormat extends FileInputFormat<LongWritable, BytesWritable>
 
         String dictionaryString = new String(dictionaryBytes);
 
-        // Load the dictionary into a HashMap
+        // Load the local dictionary into a HashMap
         HashMap<Integer, String> dictionary = loadDictionary(dictionaryString);
 
         return new VEGRecordReader();
@@ -69,6 +69,7 @@ public class VEGInputFormat extends FileInputFormat<LongWritable, BytesWritable>
         String line;
         int counter = 0;
 
+        // Create the dictionary into a HashMap
         try {
             while ((line = bf.readLine()) != null) {
                 
@@ -88,6 +89,7 @@ public class VEGInputFormat extends FileInputFormat<LongWritable, BytesWritable>
         return true;
     }
 
+    // Create the input splits
     @Override
     public List <InputSplit> getSplits(JobContext context) throws IOException {
 
@@ -112,7 +114,7 @@ public class VEGInputFormat extends FileInputFormat<LongWritable, BytesWritable>
             inStream.read(encodedFileDirectionBytes);
 
             int encodedFileDirection = ByteBuffer.wrap(encodedFileDirectionBytes).getInt();
-
+            // Add the position of the encoded file direction as the first record boundary
             recordBoundaries.add((long)encodedFileDirection);
 
             // For each block
@@ -134,9 +136,11 @@ public class VEGInputFormat extends FileInputFormat<LongWritable, BytesWritable>
 
             inStream.close();
 
+            // Add the position of the last record boundary
             long lastBoundarie = (long)(blockLocations[blockLocations.length - 1].getOffset() + blockLocations[blockLocations.length - 1].getLength());
             if (!recordBoundaries.contains(lastBoundarie)) recordBoundaries.add(lastBoundarie);
 
+            // Create the input splits from the record boundaries
             for (int i = 0; i < recordBoundaries.size() - 1; i++) {
 
                 long start = recordBoundaries.get(i);
@@ -180,11 +184,9 @@ public class VEGInputFormat extends FileInputFormat<LongWritable, BytesWritable>
             // Move the pointer to the start position
             in.seek(start);
 
-            System.out.println("Start: " + start);
-
         }
 
-        // Get the dictionary
+        // Return the dictionary
         public HashMap<Integer, String> getDictionary() {
             return dictionary;
         }
